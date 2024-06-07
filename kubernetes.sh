@@ -152,7 +152,7 @@ install_containerd() {
     sudo install -m 0755 -d /etc/apt/keyrings || error_exit "Falha ao instalar pré-requisitos keyrings."
 
     # Adicionando o repositório do Docker
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o -y /etc/apt/keyrings/docker.gpg || error_exit "Falha ao baixar chave GPG."
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg || error_exit "Falha ao baixar chave GPG."
     sudo chmod a+r /etc/apt/keyrings/docker.gpg || error_exit "Falha ao dar permissão para keyrings/docker.gpg."
     
     #echo 'deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/trusted.gpg.d/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable' | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null ||  error_exit "Falha ao configurar repositório Docker."
