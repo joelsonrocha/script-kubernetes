@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Definição da rede interna dos Pods (Para evitar conflito com a VPC da AWS)
+POD_CIDR="192.168.0.0/16"
+
 # ----------------------
 # Funções de Utilidade
 # ----------------------
@@ -125,7 +128,9 @@ install_containerd() {
 
 install_kubernetes_tools() {
     apt-get update
-    apt-get install -y apt-transport-https ca-certificates curl
+    # ALTERAÇÃO 1: Adicionado linux-headers (obrigatório para Cilium na AWS)
+    apt-get install -y apt-transport-https ca-certificates curl linux-headers-$(uname -r)
+    
     curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.34/deb/Release.key | gpg --dearmor -o /etc/apt/trusted.gpg.d/kubernetes-apt-keyring.gpg
     echo 'deb [signed-by=/etc/apt/trusted.gpg.d/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.34/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
     apt-get update
@@ -137,7 +142,8 @@ install_kubernetes_tools() {
 # Cluster Kubernetes
 # ----------------------
 initialize_control_plane() {
-    kubeadm init
+    # ALTERAÇÃO 2: Definir CIDR dos pods explicitamente para evitar conflito com VPC AWS
+    kubeadm init --pod-network-cidr=$POD_CIDR
 }
 
 configure_kubectl() {
@@ -166,18 +172,13 @@ install_cilium_cni() {
     helm repo add cilium https://helm.cilium.io/ 
     helm repo update
 
-    # Instalar Cilium
+    # ALTERAÇÃO 3: Instalar Cilium garantindo o CIDR correto
     helm install cilium cilium/cilium \
-    --version 1.18.4 \
     --namespace kube-system \
     --set ipam.mode=cluster-pool \
-    --set kubeProxyReplacement=true \
-    --set bpf.masquerade=true \
-    --set nodePort.enabled=true \
-    --set hostServices.enabled=true \
-    --set autoDirectNodeRoutes=true \
-    --set kubeProxyReplacementHealthzBindAddr=":10256" \
-    --set trafficEncryption.enabled=false
+    --set ipam.operator.clusterPoolIPv4PodCIDRList="{$POD_CIDR}" \
+    --set tunnel=vxlan \
+    --set kubeProxyReplacement=disabled
 
     # Checa se tudo subiu
     kubectl -n kube-system rollout status ds/cilium --timeout=300s
