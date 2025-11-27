@@ -148,13 +148,30 @@ configure_kubectl() {
     export KUBECONFIG=$HOME/.kube/config
 }
 
+install_helm() {
+    if ! command -v helm &> /dev/null; then
+        echo "Instalando Helm..."
+        curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    else
+        echo "Helm já instalado."
+    fi
+}
+
 # install_calico_cni() {
 #     # Versão compatível com K8s 1.34
 #     kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/calico.yaml
 # }
 install_cilium_cni() {
-    curl -fsSL https://raw.githubusercontent.com/cilium/cilium/v1.16/install/kubernetes/quick-install.yaml \
-    | kubectl apply -f -
+    # Adicionar repositório 
+    helm repo add cilium https://helm.cilium.io/ 
+    helm repo update
+    
+    # Instalar Cilium
+    helm install cilium cilium/cilium \
+    --version 1.18.4 \
+    --namespace kube-system \
+    --set ipam.mode=cluster-pool \
+    --set kubeProxyReplacement=strict
 }
 
 install_dashboard() {
@@ -214,6 +231,7 @@ case "$machine_type" in
         enable_ip_forward
         initialize_control_plane
         configure_kubectl
+        install_helm
         install_cilium_cni
         #install_calico_cni
         # install_dashboard
