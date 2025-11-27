@@ -165,13 +165,23 @@ install_cilium_cni() {
     # Adicionar repositório 
     helm repo add cilium https://helm.cilium.io/ 
     helm repo update
-    
+
     # Instalar Cilium
     helm install cilium cilium/cilium \
     --version 1.18.4 \
     --namespace kube-system \
     --set ipam.mode=cluster-pool \
-    --set kubeProxyReplacement=strict
+    --set kubeProxyReplacement=true \
+    --set bpf.masquerade=true \
+    --set nodePort.enabled=true \
+    --set hostServices.enabled=true \
+    --set autoDirectNodeRoutes=true \
+    --set kubeProxyReplacementHealthzBindAddr=":10256" \
+    --set trafficEncryption.enabled=false
+
+    # Checa se tudo subiu
+    kubectl -n kube-system rollout status ds/cilium --timeout=300s
+    kubectl -n kube-system rollout status deployment/cilium-operator --timeout=300s
 }
 
 install_dashboard() {
