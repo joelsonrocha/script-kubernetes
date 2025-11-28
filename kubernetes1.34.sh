@@ -73,6 +73,7 @@ disable_swap() {
 
 open_firewall_ports() {
     if systemctl is-active --quiet ufw; then
+        ufw allow 22/tcp #lembrar de liberar a porta ssh, caso o fiewwall esteja desabilitado, para não perder o acesso, mudar a porta, caso seja necessário
         ufw allow 6443/tcp
         ufw allow 2379:2380/tcp
         ufw allow 10250/tcp
