@@ -73,17 +73,19 @@ disable_swap() {
 }
 
 open_firewall_ports() {
-    if systemctl is-active --quiet ufw; then
-        ufw allow 6443/tcp
-        ufw allow 2379:2380/tcp
-        ufw allow 10250/tcp
-        # Cilium VXLAN port
-        ufw allow 10259/tcp
-        ufw allow 10257/tcp
-        ufw allow 30000:32767/tcp
-        ufw allow 8472/udp 
-        ufw --force enable
-    fi
+    # if systemctl is-active --quiet ufw; then
+    #     ufw allow 6443/tcp
+    #     ufw allow 2379:2380/tcp
+    #     ufw allow 10250/tcp
+    #     # Cilium VXLAN port
+    #     ufw allow 10259/tcp
+    #     ufw allow 10257/tcp
+    #     ufw allow 30000:32767/tcp
+    #     ufw allow 8472/udp 
+    #     ufw --force enable
+    # fi
+    echo "Desabilitando UFW (Firewall do OS) para evitar conflitos na AWS..."
+    ufw disable || true
 }
 
 install_kernel_modules() {
