@@ -168,17 +168,19 @@ install_helm() {
 install_cilium_cni() {
     echo "Instalando Cilium 1.18.4..."
     
+    # Remove instalação anterior que falhou (importante!)
+    helm uninstall cilium -n kube-system 2>/dev/null || true
+
     helm repo add cilium https://helm.cilium.io/ 
     helm repo update
 
-    # Instalação Cilium AWS/Generic
-    # Removido 'tunnel=vxlan' pois é deprecated. O padrão já é VXLAN.
+    # Instalação com a correção do kubeProxyReplacement (true ou false)
     helm install cilium cilium/cilium \
     --version 1.18.4 \
     --namespace kube-system \
     --set ipam.mode=cluster-pool \
     --set ipam.operator.clusterPoolIPv4PodCIDRList="{$POD_CIDR}" \
-    --set kubeProxyReplacement=disabled
+    --set kubeProxyReplacement=false
 
     echo "Aguardando Cilium iniciar..."
     kubectl -n kube-system rollout status ds/cilium --timeout=300s
